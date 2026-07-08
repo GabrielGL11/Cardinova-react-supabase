@@ -1,0 +1,168 @@
+:root {
+    --color-fondo-claro: #F1F5F9;
+    --color-primary: #E4ECE7;
+    --color-quinary: #425851;
+    --color-text: #52616B;
+    --color-nav: #1F4E5F;
+    --color-boton: #1F4E5F;
+    --color-accent: #598b9c;
+    --radius: 9px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--color-fondo-claro);
+    color: var(--color-text);
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.contenido-principal {
+    flex: 1;
+    padding: 40px 20px;
+    background-color: transparent; 
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.navbar {
+    background-color: var(--color-nav);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+.nav-links ul {
+    display: flex;
+    list-style: none;
+    gap: 20px;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+footer {
+    background-color: var(--color-nav); 
+    color: white;
+    text-align: center;
+    padding: 20px;
+    margin-top: auto;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-contenido {
+    background: white;
+    padding: 30px;
+    border-radius: var(--radius);
+    width: 400px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+    background: white;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+th {
+    background-color: var(--color-primary);
+    color: var(--color-quinary);
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+}
+
+td {
+    padding: 15px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.contenedor-acciones {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-accion {
+    padding: 6px;
+    border: 1px solid #dcdde1;
+    border-radius: 6px;
+    background-color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.btn-accion:hover {
+    background-color: #f8f9fa;
+    border-color: #b2bec3;
+    transform: translateY(-1px);
+}
+
+.btn-accion-delete:hover {
+    background-color: #ffeaea;
+    border-color: #ff7675;
+}
+.filtro-container {
+    margin-bottom: 15px;
+}
+.aviso-dias {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+    border: 1px solid #ffeeba;
+    font-family: sans-serif;
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+        text-align: center;
+    }
+
+    .nav-links ul {
+        flex-direction: column;
+        gap: 10px;
+        padding: 0;
+    }
+
+    .contenido-principal {
+        padding: 20px 10px;
+    }
+    
+    table { font-size: 14px; }
+    td, th { padding: 8px; }
+}

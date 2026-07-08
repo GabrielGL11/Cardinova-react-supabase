@@ -1,0 +1,363 @@
+:root {
+    --color-nav: #1a4a5a;
+    --font-nav: 'Inter', sans-serif;
+    --error-color: #d93025;
+}
+
+/* --- Estilos de Navegación y Footer (Originales) --- */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: var(--color-nav);
+    color: white;
+}
+
+.nav-logo {
+    font-weight: 800;
+    font-size: 1.5rem;
+    text-decoration: none;
+    color: white;
+    font-family: var(--font-nav);
+}
+
+.nav-links ul {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    font-family: var(--font-nav);
+    font-size: 0.9rem;
+    transition: opacity 0.3s;
+}
+
+.nav-links a:hover {
+    opacity: 0.7;
+}
+
+/* --- Nuevos estilos para Login (Integrados) --- */
+
+.formulario1 {
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.input-password {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.input-password input {
+    flex: 1;
+}
+
+.toggle-password {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: -30px;
+}
+
+.mensaje-error {
+    color: var(--error-color);
+    text-align: center;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.texto-centro {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.volver-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* --- Footer (Original) --- */
+.footer {
+    text-align: center;
+    padding: 2rem;
+    background-color: var(--color-nav);
+    color: white;
+    margin-top: auto;
+}
+
+.contenedor-volver {
+    margin-bottom: 15px;
+}
+
+.redes {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin: 15px 0;
+    font-size: 1.5rem;
+}
+
+.redes a {
+    color: white;
+    transition: color 0.3s;
+}
+
+.redes a:hover {
+    color: #a8d5e2;
+}
+
+.footer p {
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+.user-info-nav {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: white;
+    font-size: 0.85rem;
+}
+
+.btn-cerrar-sesion {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+.btn-cerrar-sesion:hover {
+    background: #c0392b;
+}
+
+/* Estilo moderno para el botón de ingreso */
+.boton-ingresar {
+    display: block;
+    background-color: #007bff; 
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    width: 100%; /* Para que ocupe el ancho del formulario */
+    margin-top: 20px;
+}
+
+.boton-ingresar:hover {
+    background-color: #0069d9; /* Un tono un poco más claro al pasar el mouse */
+    transform: translateY(-2px); /* Un pequeño efecto de elevación */
+}
+
+.boton-ingresar:active {
+    transform: translateY(0); /* Efecto al hacer clic */
+}
+
+/* --- Estilos para Home.tsx --- */
+
+#inicio {
+    padding: 20px;
+    background-color: #f9f9f9;
+    text-align: center;
+}
+
+.bloque-cabecera {
+    text-align: center;
+    max-width: 90%;
+    margin: 0 auto;
+}
+
+.titulo-frontal {
+    font-size: 3rem;
+    line-height: 1.1;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+    color: var(--color-nav);
+}
+
+.boton-inicio {
+    display: inline-block;
+    background-color: var(--color-nav);
+    color: white;
+    padding: 12px 32px;
+    font-size: 18px;
+    border-radius: 14px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: transform 0.3s;
+}
+
+.boton-inicio:hover {
+    transform: scale(1.05);
+    background-color: #133a47;
+}
+
+.seccion-problema {
+    padding: 80px 10%;
+    background-color: #eef6f8;
+    border-radius: 60px;
+    margin: 40px 20px;
+}
+
+.publico_objetivo {
+    padding: 80px 10%;
+    background-color: #eef6f8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    border-radius: 60px;
+    margin: 40px 20px;
+}
+
+.seccion-problema p, .texto-publico p {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    text-align: justify;
+    max-width: 800px;
+}
+
+.imagen-publico img {
+    width: 300px;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 50%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+#equipo {
+    padding: 40px 0;
+    text-align: center;
+}
+
+.miembros {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.miembros img {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid var(--color-nav);
+    margin-bottom: 10px;
+}
+
+.boton-inicio {
+    display: inline-block;
+    background-color: var(--color-nav);
+    color: white;
+    padding: 12px 30px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.boton-inicio:hover {
+    background-color: #133a47;
+}
+
+.imagen-fondo {
+    width: 100%;
+    height: 300px; /* Ajusta este valor a la altura que desees */
+    object-fit: cover; /* Esto evita que la imagen se estire */
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.imagen-publico img {
+    width: 100%;
+    max-width: 500px;
+    height: 350px;
+    object-fit: cover;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.overlay-aviso {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6); 
+    display: flex;
+    justify-content: center;
+    align-items: center;    
+    z-index: 9999;           
+}
+
+.caja-aviso {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 450px;
+    width: 90%; 
+    box-shadow: 0px 10px 25px rgba(0,0,0,0.3);
+    animation: aparecer 0.3s ease-out;
+}
+
+.caja-aviso h2 { 
+    color: #1a4a5a; 
+    font-size: 2rem; 
+    margin-bottom: 20px;
+}
+
+.caja-aviso p { 
+    font-size: 1.2rem; 
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.caja-aviso button {
+    padding: 12px 35px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.caja-aviso button:hover {
+    background: #0056b3;
+}
+
+@keyframes aparecer {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.boton-completo {
+    width: 100%;
+    margin-top: 20px;
+}

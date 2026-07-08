@@ -1,0 +1,48 @@
+:root {
+    --color-fondo-claro: #F1F5F9;
+    --color-nav: #1F4E5F;
+    --color-text: #52616B;
+    --color-text-title: #2F4858;
+    
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: var(--color-fondo-claro);
+    color: var(--color-text);
+    margin: 0;
+    padding: 0;
+}
+
+#root {
+    width: 100%;      
+    max-width: 100%;
+    margin: 0;
+    text-align: left;  
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+h1, h2, h3 {
+    font-family: 'Lexend Tera', sans-serif; 
+    color: var(--color-text-title);
+    margin: 0;
+}
+
+p {
+    margin: 0;
+    font-family: 'Caudex', serif; 
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+nav ul {
+    list-style: none !important;
+}
