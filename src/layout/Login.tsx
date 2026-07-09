@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; 
-import usuarios from '../data/autenticidad.json'; 
 import '../styles/Layout.css';
 
 export function Login() {
@@ -10,39 +9,63 @@ export function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
-    const { login } = useAuth(); // Usamos la función de login del contexto
+    const { login } = useAuth(); 
 
-    const handleLogin = (e: React.FormEvent) => {
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
+
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
 
-        // 1. Obtenemos los usuarios registrados localmente (nuevos pacientes)
-        const usuariosLocal = JSON.parse(localStorage.getItem('usuarios_app') || '[]');
-        
-        // 2. Combinamos los usuarios del JSON con los nuevos pacientes de localStorage
-        const todosLosUsuarios = [...usuarios, ...usuariosLocal];
-
-        // 3. Buscamos en la lista combinada (JSON + nuevos registros)
-        const usuarioEncontrado = todosLosUsuarios.find(
-            (u) => u.correo === email && u.contrasena === password
-        );
-
-        if (usuarioEncontrado) {
-            // Pasamos los datos necesarios al contexto (nombre y rol)
-            login({ 
-                id: usuarioEncontrado.idUsuario, 
-                nombre: usuarioEncontrado.nombre, 
-                rol: usuarioEncontrado.rol as 'paciente' | 'medico', 
-                cedula: usuarioEncontrado.cedula 
-            });
+        try {
+            // Construimos la URL usando parámetros de consulta estándar de PostgREST
+            // Buscamos específicamente el usuario donde el correo y contraseña coincidan
+            const url = `${SUPABASE_URL}/rest/v1/usuarios?correo=eq.${encodeURIComponent(email)}&contrasena=eq.${encodeURIComponent(password)}`;
             
-            // Redirección dinámica según el rol tras el inicio de sesión
-            if (usuarioEncontrado.rol === 'paciente') {
-                navigate('/paciente/agendamiento');
-            } else {
-                navigate('/medico/mis-registros');
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=representation'
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Error en la conexión con el servidor');
             }
-        } else {
-            setError('Correo o contraseña incorrectos');
+
+            const data = await response.json();
+
+            // Si data es un array y tiene elementos, el usuario existe
+            if (Array.isArray(data) && data.length > 0) {
+                const usuarioEncontrado = data[0];
+
+                // Guardamos la sesión en el contexto global
+                login(
+                    { 
+                        id: usuarioEncontrado.id_usuario, 
+                        nombre: usuarioEncontrado.nombre, 
+                        rol: usuarioEncontrado.rol, 
+                        cedula: usuarioEncontrado.cedula 
+                    },
+                    "sesion-activa" // Token de sesión simulado
+                );
+                
+                // Redirección dinámica basada en el rol
+                if (usuarioEncontrado.rol === 'paciente') {
+                    navigate('/paciente/agendamiento');
+                } else {
+                    navigate('/medico/mis-registros');
+                }
+            } else {
+                setError('Correo o contraseña incorrectos');
+            }
+        } catch (err) {
+            console.error('Error durante el login:', err);
+            setError('No se pudo conectar al sistema. Inténtalo más tarde.');
         }
     };
 
@@ -53,11 +76,11 @@ export function Login() {
             </div>
             <h2>Accede a tu cuenta</h2>
 
-            <form id="formLogin" className="formulario1 centrado" onSubmit={handleLogin}>
+            <form className="formulario1 centrado" onSubmit={handleLogin}>
                 <fieldset>
                     <legend>Iniciar sesión</legend>
                     
-                    {error && <p className="mensaje-error">{error}</p>}
+                    {error && <p className="mensaje-error" style={{color: 'red'}}>{error}</p>}
 
                     <label htmlFor="email">Correo electrónico:</label>
                     <input 
@@ -81,7 +104,6 @@ export function Login() {
                             type="button" 
                             className="toggle-password" 
                             onClick={() => setShowPassword(!showPassword)}
-                            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                         >
                             <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                         </button>

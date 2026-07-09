@@ -2,9 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Layout.css';
 
-// Componente funcional para el registro de nuevos pacientes. Implementa persistencia local mediante localStorage y validación de contraseñas.
 export function RegistroPaciente() {
-    // Estado inicial del formulario: gestiona los campos de entrada como un objeto único para facilitar la actualización.
     const [formData, setFormData] = useState({
         nombres: '',
         apellidos: '',
@@ -15,36 +13,60 @@ export function RegistroPaciente() {
     });
 
     const [error, setError] = useState('');
-    // Estado booleano para alternar el atributo 'type' (text/password) simultáneamente en ambos campos.
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
-    // Manejador de eventos para el envío del formulario. Ejecuta validaciones de integridad de datos y persiste el nuevo usuario en localStorage.
-    const handleRegistro = (e: React.FormEvent) => {
-        e.preventDefault();
+    // Variables de entorno desde tu configuración
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
 
-        // Validación: comparativa directa para asegurar coincidencia de contraseñas.
+    const handleRegistro = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        // 1. Validación de contraseñas
         if (formData.password !== formData.confirmar) {
             setError('Las contraseñas no coinciden');
             return;
         }
 
-        const nuevoPaciente = {
-            idUsuario: Date.now(),
-            nombre: `${formData.nombres} ${formData.apellidos}`,
-            cedula: formData.cedula,
-            correo: formData.correo,
-            contrasena: formData.password,
-            rol: 'paciente'
-        };
+        try {
+            // 2. Generar ID único (VARCHAR 10)
+            const idGenerado = Math.random().toString(36).substring(2, 12);
 
-        // Acceso al API de almacenamiento del navegador para persistencia de datos.
-        const usuariosGuardados = JSON.parse(localStorage.getItem('usuarios_app') || '[]');
-        usuariosGuardados.push(nuevoPaciente);
-        localStorage.setItem('usuarios_app', JSON.stringify(usuariosGuardados));
+            // 3. Inserción directa en la tabla 'usuarios'
+            // Nota: Se elimina la llamada a /auth/v1/signup
+            const dbResponse = await fetch(`${SUPABASE_URL}/rest/v1/usuarios`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify({
+                    id_usuario: idGenerado,
+                    nombre: formData.nombres,
+                    apellido: formData.apellidos,
+                    cedula: formData.cedula,
+                    correo: formData.correo,
+                    contrasena: formData.password, // Almacenamiento directo para pruebas
+                    rol: 'paciente'
+                })
+            });
 
-        alert('Cuenta creada exitosamente');
-        navigate('/login');
+            if (!dbResponse.ok) {
+                const errorData = await dbResponse.json();
+                throw new Error(errorData.message || 'Error al guardar en la base de datos');
+            }
+
+            alert('Cuenta creada exitosamente en la base de datos');
+            navigate('/login');
+
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message || 'Error al conectar con la base de datos');
+        }
     };
 
     return (
@@ -55,7 +77,7 @@ export function RegistroPaciente() {
             <form className="formulario1 centrado" onSubmit={handleRegistro}>
                 <fieldset>
                     <legend>Datos Personales</legend>
-                    {error && <p className="mensaje-error">{error}</p>}
+                    {error && <p className="mensaje-error" style={{color: 'red'}}>{error}</p>}
 
                     <div className="grid-container">
                         <div>
@@ -78,7 +100,6 @@ export function RegistroPaciente() {
                     <input type="email" id="correo" required 
                         value={formData.correo} onChange={(e) => setFormData({...formData, correo: e.target.value})} />
 
-                    {/* Contraseña: Contenedor con clase 'input-password' para aplicar estilos consistentes (fondo/bordes) */}
                     <label htmlFor="password">Contraseña:</label>
                     <div className="input-password">
                         <input 
@@ -88,17 +109,11 @@ export function RegistroPaciente() {
                             value={formData.password} 
                             onChange={(e) => setFormData({...formData, password: e.target.value})} 
                         />
-                        <button 
-                            type="button" 
-                            className="toggle-password" 
-                            onClick={() => setShowPassword(!showPassword)}
-                            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                        >
+                        <button type="button" className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
                             <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                         </button>
                     </div>
 
-                    {/* Confirmación: Se utiliza el mismo contenedor 'input-password' para heredar el diseño visual del primer input */}
                     <label htmlFor="confirmar">Confirmar contraseña:</label>
                     <div className="input-password">
                         <input 
@@ -111,7 +126,6 @@ export function RegistroPaciente() {
                     </div>
 
                     <button type="submit" className="botones boton-registro boton-completo">Crear cuenta</button>
-                    
                     <p className="texto-centro">¿Ya tienes cuenta? <a href="/login">Inicia sesión</a></p>
                 </fieldset>
             </form>

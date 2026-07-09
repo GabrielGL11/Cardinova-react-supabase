@@ -1,36 +1,46 @@
-import { type Paciente } from '../../lib/tipos';
-import pacientesData from '../../data/pacientes.json';
-
+import { type PacienteConUsuario } from '../../lib/tipos';
 import { toast } from 'sonner';
 
 interface PropsPasoDatos {
-    paciente: Paciente;
-    setPaciente: React.Dispatch<React.SetStateAction<Paciente>>;
+    paciente: PacienteConUsuario;
+    setPaciente: React.Dispatch<React.SetStateAction<PacienteConUsuario>>;
+    onBuscarPaciente: (cedula: string) => Promise<PacienteConUsuario | null>;
     onAtras: () => void;
     onGuardar: () => void;
 }
 
 /**
  * COMPONENTE PASO 3: PASODATOSPACIENTE
- * Búsqueda de paciente: verifica registros existentes o inicializa un nuevo objeto con un ID temporal.
- * Captura de datos personales y confirmación final de la cita.
+ * Gestión de datos del paciente utilizando la estructura relacional definida en tipos.ts.
+ * La cédula se encuentra dentro de 'usuarios' y el teléfono en la raíz del 'paciente'.
  */
-export const PasoDatosPaciente = ({ paciente, setPaciente, onAtras, onGuardar }: PropsPasoDatos) => {
+export const PasoDatosPaciente = ({ paciente, setPaciente, onBuscarPaciente, onAtras, onGuardar }: PropsPasoDatos) => {
 
     const handleActualizarCedula = (cedula: string) => {
-        setPaciente(prev => ({ ...prev, cedula }));
+        setPaciente(prev => ({ 
+            ...prev, 
+            usuarios: { ...prev.usuarios!, cedula } 
+        }));
     };
 
-    // Nueva función para disparar la búsqueda al terminar de escribir (evento onBlur)
-    const buscarPaciente = () => {
-        if (!paciente.cedula) return;
-        const encontrado = pacientesData.find(p => p.cedula === paciente.cedula);
-        if (encontrado) {
-            setPaciente({ ...encontrado });
+    const buscarPaciente = async () => {
+        const cedula = paciente.usuarios?.cedula;
+        if (!cedula) return;
+
+        const resultado = await onBuscarPaciente(cedula);
+        
+        if (resultado) {
+            setPaciente(resultado);
             toast.success("Paciente encontrado");
         } else {
-            setPaciente(prev => ({ ...prev, idPaciente: Date.now().toString(), nombre: '', apellido: '' }));
-            toast.info("Nuevo paciente");
+            setPaciente(prev => ({ 
+                ...prev, 
+                id_paciente: Date.now().toString(),
+                // Inicializamos respetando los campos de tu interface PacienteConUsuario
+                usuarios: { nombre: '', apellido: '', cedula: cedula },
+                telefono: '' 
+            }));
+            toast.info("Nuevo paciente: complete los datos");
         }
     };
 
@@ -40,7 +50,7 @@ export const PasoDatosPaciente = ({ paciente, setPaciente, onAtras, onGuardar }:
             <input 
                 type="text" 
                 placeholder="Cédula" 
-                value={paciente.cedula} 
+                value={paciente.usuarios?.cedula || ''} 
                 onChange={(e) => handleActualizarCedula(e.target.value)} 
                 onBlur={buscarPaciente} 
                 required
@@ -48,29 +58,30 @@ export const PasoDatosPaciente = ({ paciente, setPaciente, onAtras, onGuardar }:
             <input 
                 type="text" 
                 placeholder="Nombre" 
-                value={paciente.nombre} 
-                onChange={(e) => setPaciente({...paciente, nombre: e.target.value})} 
+                value={paciente.usuarios?.nombre || ''} 
+                onChange={(e) => setPaciente(prev => ({ ...prev, usuarios: { ...prev.usuarios!, nombre: e.target.value } }))} 
                 required 
             />
             <input 
                 type="text" 
                 placeholder="Apellido" 
-                value={paciente.apellido} 
-                onChange={(e) => setPaciente({...paciente, apellido: e.target.value})} 
+                value={paciente.usuarios?.apellido || ''} 
+                onChange={(e) => setPaciente(prev => ({ ...prev, usuarios: { ...prev.usuarios!, apellido: e.target.value } }))} 
                 required 
             />
+            {/* El correo se obtiene del campo 'correo' de tu interface Usuario */}
             <input 
                 type="email" 
-                placeholder="Email" 
-                value={paciente.email} 
-                onChange={(e) => setPaciente({...paciente, email: e.target.value})} 
+                placeholder="Correo" 
+                value={paciente.usuarios?.correo || ''} 
+                onChange={(e) => setPaciente(prev => ({ ...prev, usuarios: { ...prev.usuarios!, correo: e.target.value } }))} 
                 required
             />
             <input 
                 type="tel" 
                 placeholder="Teléfono" 
-                value={paciente.telefono} 
-                onChange={(e) => setPaciente({...paciente, telefono: e.target.value})} 
+                value={paciente.telefono || ''} 
+                onChange={(e) => setPaciente(prev => ({ ...prev, telefono: e.target.value }))} 
                 required
             />
             

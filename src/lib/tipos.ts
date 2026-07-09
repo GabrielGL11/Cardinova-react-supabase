@@ -1,45 +1,80 @@
-// -- INTERFACES DEL MODELO DE DATOS --
-// Define la estructura base de las entidades principales del sistema y sus relaciones para garantizar la consistencia en el estado global.
+// -- INTERFACES BÁSICAS (Correspondientes a tus tablas SQL) --
+
+export interface Usuario {
+    id_usuario: string;
+    nombre: string;
+    apellido: string;
+    cedula: string;
+    correo: string;
+    contrasena: string;
+    rol: 'medico' | 'paciente' | 'admin';
+}
 
 export interface Medico {
-    idMedico: string;
-    nombre: string;
-    cedula: string;
+    id_medico: string;
+    id_usuario: string;
     especialidad: string;
     ciudad: string;
     hospital: string;
-    horarios: string[]; 
-    diasDisponibles: string[]; 
 }
 
 export interface Paciente {
-    idPaciente: string;
-    cedula: string;
-    nombre: string;
-    apellido: string;
-    email: string;
+    id_paciente: string;
+    id_usuario: string;
     telefono: string;
 }
 
+export interface HorarioMedico {
+    id_horario: number;
+    id_medico: string;
+    dia: string;
+    hora: string;
+}
+
 export interface Cita {
-    idCita?: string;
-    idMedico: string;
-    idPaciente: string;
-    creadoPor?: string;
+    id_cita?: string;
+    id_medico: string;
+    id_paciente: string;
     fecha: string;
     hora: string;
     motivo: string;
-    tipoAtencion: 'Presencial' | 'Virtual';
+    tipo_atencion: 'Presencial' | 'Virtual';
     estado?: 'Programada' | 'Cancelada' | 'Completada';
-    medico?: Medico; // Propiedad opcional para población dinámica de datos
-    paciente?: Paciente; // Propiedad opcional para población dinámica de datos
-    nombrePaciente?: string; // Campo auxiliar para persistencia de pacientes no registrados en base de datos
-    apellidoPaciente?: string; // Campo auxiliar para persistencia de pacientes no registrados en base de datos
 }
+
+// -- INTERFACES EXTENDIDAS PARA JOIN (Soporte para Supabase) --
+// Estas permiten acceder a los datos relacionados de la tabla 'usuarios'
+// cuando haces consultas con: ?select=*,usuarios(nombre,apellido)
+
+export interface MedicoConUsuario extends Medico {
+    usuarios?: {
+        nombre: string;
+        apellido: string;
+        correo?: string;
+    };
+    dias_disponibles?: string[];
+    horarios?: string[];
+}
+
+export interface PacienteConUsuario extends Paciente {
+    usuarios?: {
+        nombre: string;
+        apellido: string;
+        cedula: string;
+        correo?: string;
+    };
+}
+
+export interface CitaCompleta extends Cita {
+    medicos?: MedicoConUsuario;
+    pacientes?: PacienteConUsuario;
+}
+
+// -- OTROS --
 
 export interface FiltrosBusqueda {
     especialidad: string;
     ciudad: string;
     hospital: string;
-    idMedico: string;
+    id_medico: string;
 }

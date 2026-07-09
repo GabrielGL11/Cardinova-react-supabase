@@ -1,8 +1,8 @@
-import { type Medico } from '../../lib/tipos';
+import { type MedicoConUsuario } from '../../lib/tipos';
 import { toast } from 'sonner';
 
 interface PropsPasoDetalles {
-    medico: Medico | null;
+    medico: MedicoConUsuario | null; // Interfaz extendida
     fecha: string;
     setFecha: (f: string) => void;
     hora: string;
@@ -24,7 +24,7 @@ interface PropsPasoDetalles {
 /**
  * COMPONENTE PASO 2: PASODETALLESCITA
  * Gestión de fecha, disponibilidad horaria y modalidad de atención.
- * Incluye lógica de validación cruzada con la disponibilidad del médico y estado de citas.
+ * Realiza validaciones contra la disponibilidad del médico vinculada a la tabla 'horarios_medico'.
  */
 export const PasoDetallesCita = ({ 
     medico, fecha, setFecha, hora, setHora, motivosSeleccionados, setMotivosSeleccionados, 
@@ -37,7 +37,15 @@ export const PasoDetallesCita = ({
     return (
         <>
             <h3>Detalles de la Cita</h3>
-            {medico && <p className="aviso-dias">El médico atiende: <strong>{medico.diasDisponibles.join(', ')}</strong></p>}
+            {/* 
+                Nota: Como 'medico' ahora contiene la relación con 'usuarios', 
+                la información de días disponibles vendrá de la consulta a la tabla 'horarios_medico'.
+            */}
+            {medico && (
+                <p className="aviso-dias">
+                    Médico: <strong>{medico.usuarios?.nombre} {medico.usuarios?.apellido}</strong>
+                </p>
+            )}
             
             <input 
                 type="date" 
@@ -46,7 +54,10 @@ export const PasoDetallesCita = ({
                 onChange={(e) => {
                     const val = e.target.value;
                     if(esDiaValido(val)) setFecha(val);
-                    else { toast.error("Fecha no válida", { description: "El médico no atiende ese día." }); setFecha(''); }
+                    else { 
+                        toast.error("Fecha no válida", { description: "El médico no atiende ese día o no hay cupos." }); 
+                        setFecha(''); 
+                    }
                 }} 
             />
             

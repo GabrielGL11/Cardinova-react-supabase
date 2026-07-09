@@ -1,12 +1,22 @@
-import { type Medico } from '../lib/tipos';
+import { type MedicoConUsuario } from '../lib/tipos'; 
 import '../styles/FormularioCita.css';
 
-// Muestra un resumen visual de la información del médico seleccionado
-export const TarjetaMedico = ({ medico }: { medico: Medico }) => (
-    <div className="tarjeta-medico">
-        <h4 className="tarjeta-titulo">Médico Seleccionado:</h4>
-        <p><strong>Nombre:</strong> {medico.nombre}</p>
-        <p><strong>Especialidad:</strong> {medico.especialidad}</p>
-        <p><strong>Hospital:</strong> {medico.hospital}</p>
-    </div>
-);
+/**
+ * TarjetaMedico: Componente corregido para usar MedicoConUsuario.
+ * Se asegura de que los nombres de las propiedades coincidan con la interfaz extendida.
+ */
+export const TarjetaMedico = ({ medico }: { medico?: MedicoConUsuario }) => {
+    // Si no hay médico, no renderiza nada para evitar errores
+    if (!medico) return null;
+
+    return (
+        <div className="tarjeta-medico">
+            <h4 className="tarjeta-titulo">Médico Seleccionado:</h4>
+            
+            {/* Accedemos a 'usuarios' que ahora existe gracias a MedicoConUsuario */}
+            <p><strong>Nombre:</strong> {medico.usuarios?.nombre || 'No disponible'} {medico.usuarios?.apellido || ''}</p>
+            <p><strong>Especialidad:</strong> {medico.especialidad || 'No disponible'}</p>
+            <p><strong>Hospital:</strong> {medico.hospital || 'No disponible'}</p>
+        </div>
+    );
+};

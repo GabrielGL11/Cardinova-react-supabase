@@ -1,15 +1,22 @@
-import medicosData from '../data/medicos.json';
 import { type Medico } from '../lib/tipos';
 
-// Obtener listas únicas para los selectores
-export const obtenerEspecialidades = (): string[] => 
-    Array.from(new Set(medicosData.map(m => m.especialidad)));
+/**
+ * UTILIDADES DE FILTRADO
+ * Ahora reciben la lista completa de médicos (data) como primer argumento.
+ */
 
-export const obtenerCiudades = (esp: string): string[] => 
-    Array.from(new Set(medicosData.filter(m => m.especialidad === esp).map(m => m.ciudad)));
+// Obtener especialidades únicas
+export const obtenerEspecialidades = (medicos: Medico[]): string[] => 
+    Array.from(new Set(medicos.map(m => m.especialidad)));
 
-export const obtenerHospitales = (esp: string, ciu: string): string[] => 
-    Array.from(new Set(medicosData.filter(m => m.especialidad === esp && m.ciudad === ciu).map(m => m.hospital)));
+// Obtener ciudades únicas basadas en una especialidad
+export const obtenerCiudades = (medicos: Medico[], esp: string): string[] => 
+    Array.from(new Set(medicos.filter(m => m.especialidad === esp).map(m => m.ciudad)));
 
-export const obtenerMedicosFiltrados = (esp: string, ciu: string, hosp: string): Medico[] => 
-    medicosData.filter(m => m.especialidad === esp && m.ciudad === ciu && m.hospital === hosp);
+// Obtener hospitales únicos basados en especialidad y ciudad
+export const obtenerHospitales = (medicos: Medico[], esp: string, ciu: string): string[] => 
+    Array.from(new Set(medicos.filter(m => m.especialidad === esp && m.ciudad === ciu).map(m => m.hospital)));
+
+// Filtrar la lista de médicos completa
+export const obtenerMedicosFiltrados = (medicos: Medico[], esp: string, ciu: string, hosp: string): Medico[] => 
+    medicos.filter(m => m.especialidad === esp && m.ciudad === ciu && m.hospital === hosp);

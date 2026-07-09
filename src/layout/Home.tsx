@@ -1,6 +1,7 @@
 import '../styles/Layout.css'; // Asegúrate de que apunte a tu archivo de estilos
 import fondoMedico from "../assets/gestion_medica.png"; 
 import publicoObjetivoImg from "../assets/seccion_publico_objetivo.png";
+import { Link } from 'react-router-dom';
 
 export function Home() {
 return (
@@ -16,7 +17,7 @@ return (
                 Sistema de Gestión <br />
                 Médica
             </h1>
-            <a href="/registro" className="boton-inicio botones">Registrarse</a>
+            <Link to="/registro" className="boton-inicio botones">Registrarse</Link>
             </div>
         </div>
 

@@ -1,11 +1,11 @@
-import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 
 /**
  * Define la estructura de los datos del usuario para mantener la consistencia.
  * Se añadió el campo 'id' para poder filtrar las citas por usuario.
  */
 export interface UserData {
-    id: string; // ID único necesario para el filtrado de citas
+    id: string; // ID único generado por Supabase
     nombre: string;
     rol: 'paciente' | 'medico';
     cedula: string;
@@ -14,13 +14,12 @@ export interface UserData {
 
 /**
  * AuthContextType: Define qué funciones y estados están disponibles globalmente.
- * Se incluyó 'userData' para acceder a la información completa del usuario.
  */
 export interface AuthContextType {
     isLoggedIn: boolean;
     userRole: 'paciente' | 'medico' | null;
-    userData: UserData | null; // Nuevo estado para persistir el objeto completo
-    login: (userData: UserData) => void;
+    userData: UserData | null;
+    login: (userData: UserData, token: string) => void;
     logout: () => void;
 }
 
@@ -33,32 +32,36 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    // Inicialización "lazy": lee el objeto completo del usuario desde localStorage al montar.
-    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-        return !!localStorage.getItem('usuarioLogueado');
-    });
+    // Inicialización del estado: intenta recuperar el usuario y el token de localStorage
+    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!localStorage.getItem('supabase_token'));
+    const [userRole, setUserRole] = useState<'paciente' | 'medico' | null>(null);
+    const [userData, setUserData] = useState<UserData | null>(null);
 
-    const [userRole, setUserRole] = useState<'paciente' | 'medico' | null>(() => {
-        const data = localStorage.getItem('usuarioLogueado');
-        return data ? JSON.parse(data).rol : null;
-    });
+    // Efecto para restaurar el estado si el usuario refresca la página
+    useEffect(() => {
+        const storedUser = localStorage.getItem('usuarioLogueado');
+        if (storedUser) {
+            const parsedUser = JSON.parse(storedUser);
+            setUserData(parsedUser);
+            setUserRole(parsedUser.rol);
+        }
+    }, []);
 
-    const [userData, setUserData] = useState<UserData | null>(() => {
-        const data = localStorage.getItem('usuarioLogueado');
-        return data ? JSON.parse(data) : null;
-    });
-
-    // login: Actualiza el estado global, el rol y el objeto userData completo.
-    const login = useCallback((userData: UserData) => {
+    // login: Actualiza el estado global y persiste tanto el usuario como el token de Supabase
+    const login = useCallback((userData: UserData, token: string) => {
+        localStorage.setItem('supabase_token', token); // Guardamos el token para peticiones futuras
         localStorage.setItem('usuarioLogueado', JSON.stringify(userData));
+        
         setIsLoggedIn(true);
         setUserRole(userData.rol);
         setUserData(userData);
     }, []);
 
-    // logout: Limpia todos los estados y el almacenamiento local.
+    // logout: Limpia los estados, el almacenamiento local y destruye la referencia de sesión
     const logout = useCallback(() => {
+        localStorage.removeItem('supabase_token');
         localStorage.removeItem('usuarioLogueado');
+        
         setIsLoggedIn(false);
         setUserRole(null);
         setUserData(null);

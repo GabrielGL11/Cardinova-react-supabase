@@ -1,7 +1,4 @@
-import { createContext, useState, type ReactNode, useMemo } from 'react';
-import citasIniciales from '../data/citas.json';
-import medicosData from '../data/medicos.json';
-import pacientesData from '../data/pacientes.json';
+import { createContext, useState, type ReactNode, useEffect, useCallback } from 'react';
 import { type Cita } from '../lib/tipos';
 
 interface CitasContextType {
@@ -15,44 +12,77 @@ interface CitasContextType {
 export const CitasContext = createContext<CitasContextType | undefined>(undefined);
 
 // -- COMPONENTE CITASPROVIDER --
-// Gestiona el estado global de las citas, integrando datos de pacientes y médicos mediante una capa de procesamiento en memoria
+// Gestiona el estado global de las citas, sincronizándose con la tabla 'citas' en Supabase mediante peticiones HTTP.
 export const CitasProvider = ({ children }: { children: ReactNode }) => {
-    // Inicializamos el estado leyendo desde localStorage. Si no hay nada guardado, usamos citasIniciales
-    const [citasRaw, setCitasRaw] = useState<any[]>(() => {
-        const guardadas = localStorage.getItem('citas_agendadas');
-        return guardadas ? JSON.parse(guardadas) : citasIniciales;
-    });
-    
+    const [citas, setCitas] = useState<Cita[]>([]);
     const [citaEditando, setCitaEditando] = useState<Cita | null>(null);
 
-    // Procesa las citas crudas para poblar objetos relacionados (médico y paciente) garantizando integridad de datos
-    const citas = useMemo(() => {
-        return citasRaw.map(c => ({
-            ...c,
-            // Vincula el objeto médico completo para facilitar el acceso en la UI
-            medico: medicosData.find(m => m.idMedico === c.idMedico),
-            // Lógica: busca en pacientesData, si no existe, construye el objeto desde los campos de la cita (persistencia dinámica)
-            paciente: pacientesData.find(p => p.idPaciente === c.idPaciente) ||
-                        (c.nombrePaciente ? { 
-                            idPaciente: c.idPaciente, 
-                            nombre: c.nombrePaciente,
-                            apellido: c.apellidoPaciente || '' 
-                        } : undefined)
-        })) as Cita[];
-    }, [citasRaw]);
+    const URL_BASE = import.meta.env.VITE_SUPABASE_URL;
+    const API_KEY = import.meta.env.VITE_SUPABASE_KEY;
 
-    // Registra una nueva cita en el estado crudo y actualiza localStorage para persistencia
-    const agregarCita = (nuevaCita: Cita) => {
-        const nuevasCitas = [...citasRaw, nuevaCita];
-        setCitasRaw(nuevasCitas);
-        localStorage.setItem('citas_agendadas', JSON.stringify(nuevasCitas));
+    // Obtiene todas las citas desde Supabase al montar el componente
+    const fetchCitas = useCallback(async () => {
+        try {
+            const response = await fetch(`${URL_BASE}/rest/v1/citas?select=*`, {
+                headers: {
+                    'apikey': API_KEY,
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setCitas(data);
+            }
+        } catch (error) {
+            console.error("Error al cargar citas de Supabase:", error);
+        }
+    }, [URL_BASE, API_KEY]);
+
+    useEffect(() => {
+        fetchCitas();
+    }, [fetchCitas]);
+
+    // Registra una nueva cita en Supabase mediante POST y actualiza el estado local
+    const agregarCita = async (nuevaCita: Cita) => {
+        try {
+            const response = await fetch(`${URL_BASE}/rest/v1/citas`, {
+                method: 'POST',
+                headers: {
+                    'apikey': API_KEY,
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify(nuevaCita)
+            });
+            if (response.ok) {
+                fetchCitas(); // Refrescamos la lista tras insertar
+            }
+        } catch (error) {
+            console.error("Error al insertar cita:", error);
+        }
     };
     
-    // Actualiza una cita existente y sincroniza con localStorage
-    const actualizarCita = (citaActualizada: Cita) => {
-        const nuevasCitas = citasRaw.map(c => c.idCita === citaActualizada.idCita ? citaActualizada : c);
-        setCitasRaw(nuevasCitas);
-        localStorage.setItem('citas_agendadas', JSON.stringify(nuevasCitas));
+    // Actualiza una cita existente en Supabase mediante PATCH usando el ID como filtro
+    const actualizarCita = async (citaActualizada: Cita) => {
+        try {
+            const response = await fetch(`${URL_BASE}/rest/v1/citas?id_cita=eq.${citaActualizada.id_cita}`, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': API_KEY,
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify(citaActualizada)
+            });
+            if (response.ok) {
+                fetchCitas(); // Refrescamos la lista tras actualizar
+            }
+        } catch (error) {
+            console.error("Error al actualizar cita:", error);
+        }
     };
 
     return (
