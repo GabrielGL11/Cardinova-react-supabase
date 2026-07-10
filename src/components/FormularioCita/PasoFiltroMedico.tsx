@@ -42,7 +42,7 @@ export const PasoFiltroMedico = ({ esp, setEsp, ciu, setCiu, hosp, setHosp, medi
             {medico && (
                 <div className="tarjeta-medico">
                     <TarjetaMedico medico={medico} />
-                    <button type="button" onClick={onContinuar}>Continuar</button>
+                    <button type="button" className="boton-continuar-paso1" onClick={onContinuar}>Continuar</button>
                 </div>
             )}
         </div>

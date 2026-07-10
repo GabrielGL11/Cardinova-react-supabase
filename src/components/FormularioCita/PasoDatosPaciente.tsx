@@ -51,8 +51,8 @@ export const PasoDatosPaciente = ({ paciente, setPaciente, onBuscarPaciente, onA
             <input type="tel" placeholder="Teléfono" value={paciente.telefono || ''} onChange={(e) => setPaciente(prev => ({ ...prev, telefono: e.target.value }))} required />
             
             <div className="grupo-botones">
-                <button type="button" onClick={onAtras}>Atrás</button>
-                <button type="button" onClick={handleFinalizar}>Finalizar Registro</button>
+                <button type="button" className="boton-volver" onClick={onAtras}>Atrás</button>
+                <button type="button" className="boton-registro" onClick={handleFinalizar}>Finalizar Registro</button>
             </div>
         </div>
     );

@@ -20,15 +20,10 @@ export function AppContent() {
 
     const citaEnEdicion = citaEditando as CitaCompleta | null;
 
-    // Función auxiliar para normalizar texto (quita tildes y pasa a minúsculas)
     const normalizar = (texto: string) => 
         texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-    /**
-     * LÓGICA CORREGIDA: Ahora lee de 'medicos.horarios_medico'
-     */
     const esDiaValido = (fechaSeleccionada: string, cita: CitaCompleta) => {
-        // Obtenemos los horarios desde la relación
         const horarios = cita.medicos?.horarios_medico || [];
         if (horarios.length === 0) return false;
         
@@ -38,9 +33,6 @@ export function AppContent() {
         return horarios.some((h: any) => normalizar(h.dia) === normalizar(diaNombre));
     };
 
-    /**
-     * LÓGICA CORREGIDA: Filtra horarios disponibles por día de la semana
-     */
     const getHorariosDisponibles = (cita: CitaCompleta) => {
         const horarios = cita.medicos?.horarios_medico || [];
         const fechaObj = new Date(cita.fecha.replace(/-/g, '/'));
@@ -90,13 +82,19 @@ export function AppContent() {
                 <div className="modal-overlay">
                     <div className="modal-contenido">
                         <h3>Editar Cita</h3>
+                        
+                        <div className="aviso-dias">
+                            <strong>Atiende:</strong> {citaEnEdicion.medicos?.horarios_medico && citaEnEdicion.medicos.horarios_medico.length > 0
+                                ? Array.from(new Set(citaEnEdicion.medicos.horarios_medico.map(h => h.dia))).join(', ') 
+                                : 'Cargando disponibilidad...'}
+                        </div>
 
                         <div className="grupo-selector">
                             <label htmlFor="fechaCita">Fecha:</label>
                             <input 
                                 id="fechaCita" 
                                 type="date" 
-                                value={citaEnEdicion.fecha} 
+                                value={citaEnEdicion.fecha ? citaEnEdicion.fecha.split('T')[0] : ''} 
                                 onChange={(e) => {
                                     if (esDiaValido(e.target.value, citaEnEdicion)) {
                                         setCitaEditando({...citaEnEdicion, fecha: e.target.value, hora: ''});
@@ -123,8 +121,23 @@ export function AppContent() {
                         </div>
 
                         <div className="acciones-modal">
-                            <button type="button" onClick={guardarEdicion}>Guardar Cambios</button>
-                            <button type="button" onClick={() => setCitaEditando(null)}>Cancelar</button>
+                            <button 
+                                type="button" 
+                                className="boton-registro" 
+                                onClick={async () => {
+                                    await guardarEdicion();
+                                    setCitaEditando(null);
+                                }}
+                            >
+                                Guardar Cambios
+                            </button>
+                            <button 
+                                type="button" 
+                                className="boton-volver" 
+                                onClick={() => setCitaEditando(null)}
+                            >
+                                Cancelar
+                            </button>
                         </div>
                     </div>
                 </div>
