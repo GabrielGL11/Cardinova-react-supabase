@@ -55,6 +55,10 @@ export interface MedicoConUsuario extends Medico {
     };
     dias_disponibles?: string[];
     horarios?: string[];
+    horarios_medico?: { 
+        dia: string; 
+        hora: string 
+    }[];
 }
 
 export interface PacienteConUsuario extends Paciente {

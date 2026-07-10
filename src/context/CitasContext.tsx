@@ -23,35 +23,33 @@ export const CitasProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchCitas = useCallback(async () => {
         try {
-            // Usamos URLSearchParams para garantizar que la consulta llegue bien a Supabase
-            const params = new URLSearchParams({
-                select: "*,pacientes(id_paciente,id_usuario,usuarios(nombre,apellido)),medicos(id_medico,id_usuario,especialidad,usuarios(nombre,apellido))"
-            });
-
-            const response = await fetch(`${URL_BASE}/rest/v1/citas?${params.toString()}`, {
-                headers: { 
-                    'apikey': API_KEY, 
-                    'Authorization': `Bearer ${API_KEY}`,
-                    'Prefer': 'return=representation'
-                }
-            });
+            // CORRECCIÓN: Solicitamos la tabla relacionada 'horarios_medico'
+            const selectQuery = "*,pacientes(id_paciente,id_usuario,usuarios(nombre,apellido)),medicos(id_medico,id_usuario,especialidad,horarios_medico(dia,hora),usuarios(nombre,apellido))";
             
-            const data = await response.json();
+            const response = await fetch(
+                `${URL_BASE}/rest/v1/citas?select=${selectQuery}`, 
+                {
+                    headers: { 
+                        'apikey': API_KEY, 
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Prefer': 'return=representation'
+                    }
+                }
+            );
             
             if (response.ok) {
-                console.log("Datos cargados correctamente:", data);
+                const data = await response.json();
                 setCitas(data || []);
             } else {
-                console.error("Error en Supabase:", data);
+                console.error("Error en Supabase:", await response.text());
             }
         } catch (error) {
-            console.error("Error crítico al cargar citas:", error);
+            console.error("Error al cargar citas:", error);
         }
     }, [URL_BASE, API_KEY]);
 
     useEffect(() => {
-        if (userData?.id) {
-            console.log("Iniciando carga de citas para:", userData.id);
+        if (userData) {
             fetchCitas(); 
         }
     }, [fetchCitas, userData]);
@@ -71,6 +69,7 @@ export const CitasProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const actualizarCita = async (citaActualizada: CitaCompleta) => {
+        // Excluimos las relaciones antes de enviar el patch
         const { medicos, pacientes, ...citaPura } = citaActualizada;
         
         const response = await fetch(`${URL_BASE}/rest/v1/citas?id_cita=eq.${citaPura.id_cita}`, {
@@ -83,6 +82,7 @@ export const CitasProvider = ({ children }: { children: ReactNode }) => {
             },
             body: JSON.stringify(citaPura)
         });
+        
         if (response.ok) {
             await fetchCitas();
             setCitaEditando(null);
