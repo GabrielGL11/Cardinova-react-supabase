@@ -47,6 +47,7 @@ export interface Cita {
 // cuando haces consultas con: ?select=*,usuarios(nombre,apellido)
 
 export interface MedicoConUsuario extends Medico {
+    // Marcamos como opcional (?) para evitar errores si la relación llega vacía
     usuarios?: {
         nombre: string;
         apellido: string;
@@ -66,8 +67,9 @@ export interface PacienteConUsuario extends Paciente {
 }
 
 export interface CitaCompleta extends Cita {
-    medicos?: MedicoConUsuario;
-    pacientes?: PacienteConUsuario;
+    // Estas son las que el fetch de Supabase rellena
+    medicos?: MedicoConUsuario | null; // Agregué 'null' por seguridad
+    pacientes?: PacienteConUsuario | null; // Agregué 'null' por seguridad
 }
 
 // -- OTROS --

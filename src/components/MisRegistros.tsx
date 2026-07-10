@@ -1,70 +1,68 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useMemo } from 'react';
 import { TablaCitas } from './TablaCitas';
 import { CitasContext } from '../context/CitasContext'; 
 import { useAuth } from '../context/AuthContext'; 
 import '../styles/TablaCitas.css';
 import { type CitaCompleta } from '../lib/tipos';
 
-// -- COMPONENTE MISREGISTROS --
-// Gestiona el historial de citas, filtrando por datos relacionales obtenidos desde Supabase.
 export const MisRegistros = () => {
     const context = useContext(CitasContext);
     const { userData, userRole } = useAuth(); 
 
     if (!context) return null;
     
-    // FORZAMOS EL TIPADO AQUÍ: Decimos explícitamente que 'citas' es un array de CitaCompleta
-    const { citas, actualizarCita, setCitaEditando } = context as { 
-        citas: CitaCompleta[], 
-        actualizarCita: (c: CitaCompleta) => void, 
-        setCitaEditando: (c: CitaCompleta | null) => void 
-    };
+    const { citas, actualizarCita, setCitaEditando } = context;
 
     const [filtroEspecialidad, setFiltroEspecialidad] = useState("Todos");
     const [filtroDia, setFiltroDia] = useState("Todos");
 
-    // Lógica de filtrado de acceso:
-    const citasUsuario = citas.filter((cita: CitaCompleta) => {
-        if (!userData) return false;
+    // 1. Filtrado de acceso por usuario
+    const citasUsuario = useMemo(() => {
+        if (!citas || !userData?.id) return [];
+        return citas.filter((cita: CitaCompleta) => {
+            if (userRole === 'medico') return String(cita.medicos?.id_usuario) === String(userData.id);
+            if (userRole === 'paciente') return String(cita.pacientes?.id_usuario) === String(userData.id);
+            return false;
+        });
+    }, [citas, userData, userRole]);
 
-        if (userRole === 'medico') {
-            // Ahora TypeScript reconocerá 'medicos' porque cita es CitaCompleta
-            return cita.medicos?.id_usuario === userData.id;
-        }
+    // 2. Cálculo dinámico de días donde el médico tiene citas
+    const diasDisponibles = useMemo(() => {
+        if (userRole !== 'medico') return [];
+        const nombresDias = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
         
-        if (userRole === 'paciente') {
-            // Ahora TypeScript reconocerá 'pacientes' porque cita es CitaCompleta
-            return cita.pacientes?.id_usuario === userData.id;
-        }
+        // Mapeamos las citas del usuario para obtener los nombres de los días presentes
+        const listaDias = citasUsuario.map(c => nombresDias[new Date(c.fecha).getUTCDay()]);
         
-        return false;
-    });
+        // Retornamos "Todos" + días únicos encontrados
+        return ["Todos", ...Array.from(new Set(listaDias))];
+    }, [citasUsuario, userRole]);
 
-    // Lógica de filtrado avanzado:
-    const citasFiltradas = citasUsuario.filter((c: CitaCompleta) => {
-        if (userRole === 'paciente') {
-            return filtroEspecialidad === "Todos" || c.medicos?.especialidad === filtroEspecialidad;
-        }
-        if (userRole === 'medico' && filtroDia !== "Todos") {
-            const fechaObj = new Date(c.fecha);
-            const dias = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
-            return dias[fechaObj.getUTCDay()] === filtroDia.toLowerCase();
-        }
-        return true;
-    });
+    // 3. Filtrado avanzado
+    const citasFiltradas = useMemo(() => {
+        return citasUsuario.filter((c: CitaCompleta) => {
+            if (userRole === 'paciente') {
+                return filtroEspecialidad === "Todos" || c.medicos?.especialidad === filtroEspecialidad;
+            }
+            if (userRole === 'medico' && filtroDia !== "Todos") {
+                const fechaObj = new Date(c.fecha);
+                const dias = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+                return dias[fechaObj.getUTCDay()] === filtroDia;
+            }
+            return true;
+        });
+    }, [citasUsuario, userRole, filtroEspecialidad, filtroDia]);
 
-    // -- ORDENAMIENTO CRONOLÓGICO --
-    const citasOrdenadas = [...citasFiltradas].sort((a, b) => {
-        return new Date(a.fecha).getTime() - new Date(b.fecha).getTime();
-    });
+    // 4. Ordenamiento
+    const citasOrdenadas = useMemo(() => {
+        return [...citasFiltradas].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+    }, [citasFiltradas]);
 
-    // Extracción dinámica de especialidades únicas
-    const especialidades = [
-        "Todos", 
-        ...Array.from(new Set(citasUsuario.map(c => c.medicos?.especialidad).filter(Boolean)))
-    ];
+    const templatesFiltro = useMemo(() => {
+        const lista = citasUsuario.map((c) => c.medicos?.especialidad).filter(Boolean);
+        return ["Todos", ...Array.from(new Set(lista))];
+    }, [citasUsuario]);
 
-    // Handler para actualizar el estado en Supabase
     const handleCambiarEstado = (id: string, nuevoEstado: 'Programada' | 'Cancelada' | 'Completada') => {
         const cita = citas.find(c => c.id_cita === id);
         if (cita) actualizarCita({ ...cita, estado: nuevoEstado });
@@ -72,15 +70,14 @@ export const MisRegistros = () => {
 
     return (
         <div className="contenedor-registros">
-            <h2>Mis Registros</h2>
+            <h2>Mis Registros ({citasOrdenadas.length} citas encontradas)</h2>
             
             <div className="filtro-container">
                 {userRole === 'medico' ? (
                     <>
                         <label htmlFor="filtroDia">Filtrar por día: </label>
                         <select id="filtroDia" value={filtroDia} onChange={(e) => setFiltroDia(e.target.value)}>
-                            <option value="Todos">Todos</option>
-                            {['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'].map(dia => (
+                            {diasDisponibles.map(dia => (
                                 <option key={dia} value={dia}>{dia}</option>
                             ))}
                         </select>
@@ -89,7 +86,7 @@ export const MisRegistros = () => {
                     <>
                         <label htmlFor="filtroEspecialidad">Filtrar por Especialidad: </label>
                         <select id="filtroEspecialidad" value={filtroEspecialidad} onChange={(e) => setFiltroEspecialidad(e.target.value)}>
-                            {especialidades.map(esp => (<option key={esp} value={esp}>{esp}</option>))}
+                            {templatesFiltro.map(esp => (<option key={esp} value={esp}>{esp}</option>))}
                         </select>
                     </>
                 )}
@@ -99,7 +96,7 @@ export const MisRegistros = () => {
                 citas={citasOrdenadas} 
                 onCambiarEstado={handleCambiarEstado}
                 onEditar={(cita: CitaCompleta) => setCitaEditando(cita)}
-                onVerDetalles={(cita: CitaCompleta) => console.log(cita)}            
+                onVerDetalles={(cita: CitaCompleta) => console.log("Detalles:", cita)}            
             />
         </div>
     );

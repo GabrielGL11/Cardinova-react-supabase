@@ -8,6 +8,7 @@ export interface UserData {
     id: string; // ID único generado por Supabase
     nombre: string;
     rol: 'paciente' | 'medico';
+    idPaciente?: string;
     cedula: string;
     idMedico?: string;
 }
