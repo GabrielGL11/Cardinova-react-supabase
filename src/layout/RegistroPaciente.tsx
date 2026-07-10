@@ -16,7 +16,6 @@ export function RegistroPaciente() {
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
-    // Variables de entorno desde tu configuración
     const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
     const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
 
@@ -24,19 +23,14 @@ export function RegistroPaciente() {
         e.preventDefault();
         setError('');
 
-        // 1. Validación de contraseñas
         if (formData.password !== formData.confirmar) {
             setError('Las contraseñas no coinciden');
             return;
         }
 
         try {
-            // 2. Generar ID único (VARCHAR 10)
-            const idGenerado = Math.random().toString(36).substring(2, 12);
-
-            // 3. Inserción directa en la tabla 'usuarios'
-            // Nota: Se elimina la llamada a /auth/v1/signup
-            const dbResponse = await fetch(`${SUPABASE_URL}/rest/v1/usuarios`, {
+            // El ID ya no se genera aquí, Supabase lo hará automáticamente en la BD
+            const response = await fetch(`${SUPABASE_URL}/rest/v1/usuarios`, {
                 method: 'POST',
                 headers: {
                     'apikey': SUPABASE_KEY,
@@ -45,33 +39,36 @@ export function RegistroPaciente() {
                     'Prefer': 'return=representation'
                 },
                 body: JSON.stringify({
-                    id_usuario: idGenerado,
-                    nombre: formData.nombres,
-                    apellido: formData.apellidos,
-                    cedula: formData.cedula,
-                    correo: formData.correo,
-                    contrasena: formData.password, // Almacenamiento directo para pruebas
+                    nombre: formData.nombres.trim(),
+                    apellido: formData.apellidos.trim(),
+                    cedula: formData.cedula.trim(),
+                    correo: formData.correo.trim().toLowerCase(),
+                    contrasena: formData.password.trim(), 
                     rol: 'paciente'
+                    // id_usuario se omite para que la BD use gen_random_uuid()
                 })
             });
 
-            if (!dbResponse.ok) {
-                const errorData = await dbResponse.json();
-                throw new Error(errorData.message || 'Error al guardar en la base de datos');
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Detalle del error de Supabase:", errorData);
+                throw new Error(errorData.message || 'Error al registrar usuario');
             }
 
-            alert('Cuenta creada exitosamente en la base de datos');
+            alert('Cuenta creada exitosamente');
             navigate('/login');
 
         } catch (err: any) {
-            console.error(err);
-            setError(err.message || 'Error al conectar con la base de datos');
+            console.error("Error capturado:", err);
+            setError(`Error: ${err.message || 'Verifica que no exista el correo/cédula'}`);
         }
     };
 
     return (
         <section className="producto1">
-            <div className="etiqueta"><span><i className="fa-solid fa-user-plus"></i> REGISTRO DE PACIENTE</span></div>
+            <div className="etiqueta">
+                <span><i className="fa-solid fa-user-plus"></i> REGISTRO DE PACIENTE</span>
+            </div>
             <h2>Crea tu cuenta</h2>
 
             <form className="formulario1 centrado" onSubmit={handleRegistro}>
@@ -115,15 +112,13 @@ export function RegistroPaciente() {
                     </div>
 
                     <label htmlFor="confirmar">Confirmar contraseña:</label>
-                    <div className="input-password">
-                        <input 
-                            type={showPassword ? "text" : "password"} 
-                            id="confirmar" 
-                            required 
-                            value={formData.confirmar} 
-                            onChange={(e) => setFormData({...formData, confirmar: e.target.value})} 
-                        />
-                    </div>
+                    <input 
+                        type={showPassword ? "text" : "password"} 
+                        id="confirmar" 
+                        required 
+                        value={formData.confirmar} 
+                        onChange={(e) => setFormData({...formData, confirmar: e.target.value})} 
+                    />
 
                     <button type="submit" className="botones boton-registro boton-completo">Crear cuenta</button>
                     <p className="texto-centro">¿Ya tienes cuenta? <a href="/login">Inicia sesión</a></p>

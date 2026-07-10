@@ -2,7 +2,7 @@ import { type MedicoConUsuario } from '../../lib/tipos';
 import { toast } from 'sonner';
 
 interface PropsPasoDetalles {
-    medico: MedicoConUsuario | null; // Interfaz extendida
+    medico: MedicoConUsuario | null;
     fecha: string;
     setFecha: (f: string) => void;
     hora: string;
@@ -15,35 +15,33 @@ interface PropsPasoDetalles {
     setMotivoOtros: (s: string) => void;
     tipoAtencion: 'Presencial' | 'Virtual';
     setTipoAtencion: (t: 'Presencial' | 'Virtual') => void;
-    horariosDisponibles: string[];
+    horariosDisponibles: any[]; 
+    horasFiltradas: string[];   
     esDiaValido: (f: string) => boolean;
     onAtras: () => void;
     onContinuar: () => void;
 }
 
-/**
- * COMPONENTE PASO 2: PASODETALLESCITA
- * Gestión de fecha, disponibilidad horaria y modalidad de atención.
- * Realiza validaciones contra la disponibilidad del médico vinculada a la tabla 'horarios_medico'.
- */
 export const PasoDetallesCita = ({ 
     medico, fecha, setFecha, hora, setHora, motivosSeleccionados, setMotivosSeleccionados, 
     esOtrosActivo, setEsOtrosActivo, motivoOtros, setMotivoOtros, tipoAtencion, setTipoAtencion,
-    horariosDisponibles, esDiaValido, onAtras, onContinuar
+    horariosDisponibles, horasFiltradas, esDiaValido, onAtras, onContinuar
 }: PropsPasoDetalles) => {
 
     const opcionesMotivo = ["Control de Rutina", "Revisión de Exámenes", "Derivación", "Consulta por Síntomas", "Control de Tratamiento"];
 
+    const obtenerDiasAtencion = () => {
+        const dias = horariosDisponibles.map(h => h.dia);
+        return [...new Set(dias)].join(', ');
+    };
+
     return (
-        <>
+        <div className="paso-detalles-container">
             <h3>Detalles de la Cita</h3>
-            {/* 
-                Nota: Como 'medico' ahora contiene la relación con 'usuarios', 
-                la información de días disponibles vendrá de la consulta a la tabla 'horarios_medico'.
-            */}
+            
             {medico && (
                 <p className="aviso-dias">
-                    Médico: <strong>{medico.usuarios?.nombre} {medico.usuarios?.apellido}</strong>
+                    Atiende: <strong>{obtenerDiasAtencion()}</strong>
                 </p>
             )}
             
@@ -53,18 +51,28 @@ export const PasoDetallesCita = ({
                 value={fecha} 
                 onChange={(e) => {
                     const val = e.target.value;
-                    if(esDiaValido(val)) setFecha(val);
-                    else { 
-                        toast.error("Fecha no válida", { description: "El médico no atiende ese día o no hay cupos." }); 
-                        setFecha(''); 
+                    if (esDiaValido(val)) {
+                        setFecha(val);
+                        setHora(''); // Resetear hora al cambiar de día
+                    } else {
+                        toast.error("Fecha no disponible", { description: "El médico no atiende ese día." });
+                        setFecha('');
                     }
                 }} 
             />
             
             {fecha && (
-                <select aria-label="Seleccione hora" value={hora} onChange={(e) => setHora(e.target.value)}>
+                <select 
+                    aria-label="Seleccione hora" 
+                    value={hora} 
+                    onChange={(e) => setHora(e.target.value)}
+                >
                     <option value="">Seleccione hora</option>
-                    {horariosDisponibles.map(h => <option key={h} value={h}>{h}</option>)}
+                    {horasFiltradas.length > 0 ? (
+                        horasFiltradas.map(h => <option key={h} value={h}>{h}</option>)
+                    ) : (
+                        <option value="" disabled>No hay horarios disponibles</option>
+                    )}
                 </select>
             )}
 
@@ -106,10 +114,10 @@ export const PasoDetallesCita = ({
                 <label>Modalidad:</label>
                 <div className="radio-group-container">
                     <label className="radio-item">
-                        <input type="radio" value="Presencial" checked={tipoAtencion === 'Presencial'} onChange={(e) => setTipoAtencion(e.target.value as 'Presencial')} /> Presencial
+                        <input type="radio" value="Presencial" checked={tipoAtencion === 'Presencial'} onChange={() => setTipoAtencion('Presencial')} /> Presencial
                     </label>
                     <label className="radio-item">
-                        <input type="radio" value="Virtual" checked={tipoAtencion === 'Virtual'} onChange={(e) => setTipoAtencion(e.target.value as 'Virtual')} /> Virtual
+                        <input type="radio" value="Virtual" checked={tipoAtencion === 'Virtual'} onChange={() => setTipoAtencion('Virtual')} /> Virtual
                     </label>
                 </div>
             </div>
@@ -120,8 +128,10 @@ export const PasoDetallesCita = ({
                     type="button" 
                     className="boton-registro" 
                     onClick={() => fecha && hora ? onContinuar() : toast.warning("Atención", { description: "Complete fecha y hora antes de continuar." })}
-                >Siguiente</button>
+                >
+                    Siguiente
+                </button>
             </div>
-        </>
+        </div>
     );
 };
