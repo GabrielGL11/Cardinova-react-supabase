@@ -77,22 +77,35 @@ export const FormularioCita = ({ onGuardar, buscarPacienteExterno }: PropsFormul
 
     const handleGuardar = async () => {
     try {
-        // 1. Gestionar el Usuario (Upsert por cédula)
-        const { data: usuario, error: errorUsuario } = await supabase
+        // 1. Gestionar el Usuario: buscar por cédula y crearlo SOLO si no existe
+        //    (antes se usaba upsert y sobrescribía la contraseña/rol de cuentas existentes)
+        const { data: usuarioExistente, error: errorBusqueda } = await supabase
             .from('usuarios')
-            .upsert({
-                nombre: paciente.usuarios?.nombre,
-                apellido: paciente.usuarios?.apellido,
-                cedula: paciente.usuarios?.cedula,
-                correo: paciente.usuarios?.correo,
-                contrasena: 'Temporal123',
-                rol: 'paciente'
-            }, { onConflict: 'cedula' })
             .select('id_usuario')
-            .single();
+            .eq('cedula', paciente.usuarios?.cedula)
+            .maybeSingle();
 
-        if (errorUsuario) throw errorUsuario;
-        const userId = usuario.id_usuario;
+        if (errorBusqueda) throw errorBusqueda;
+
+        let userId = usuarioExistente?.id_usuario;
+
+        if (!userId) {
+            const { data: nuevoUsuario, error: errorUsuario } = await supabase
+                .from('usuarios')
+                .insert({
+                    nombre: paciente.usuarios?.nombre,
+                    apellido: paciente.usuarios?.apellido,
+                    cedula: paciente.usuarios?.cedula,
+                    correo: paciente.usuarios?.correo,
+                    contrasena: 'Temporal123',
+                    rol: 'paciente'
+                })
+                .select('id_usuario')
+                .single();
+
+            if (errorUsuario) throw errorUsuario;
+            userId = nuevoUsuario.id_usuario;
+        }
 
         // 2. Gestionar el Paciente (Buscar o crear)
         let { data: pacExistente } = await supabase
