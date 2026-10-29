@@ -6,6 +6,7 @@ import { useAuth } from './context/AuthContext';
 import { FormularioCita } from './components/FormularioCita';
 import { MisRegistros } from './components/MisRegistros'; 
 import DetalleCita from './components/DetalleCita';
+import Proximamente from './components/Proximamente';
 import { type CitaCompleta } from './lib/tipos';
 import { Home } from './layout/Home';
 import { Login } from './layout/Login';
@@ -72,10 +73,17 @@ export function AppContent() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/registro" element={<RegistroPaciente />} />
                 <Route path="/paciente/agendamiento" element={isLoggedIn && userData?.rol === 'paciente' ? <FormularioCita onGuardar={agregarCita} citas={citas} usuarioActual={userData} buscarPacienteExterno={async() => null} /> : <Navigate to="/login" />} />
-                <Route path="/paciente/mis-registros" element={isLoggedIn && userData?.rol === 'paciente' ? <MisRegistros /> : <Navigate to="/login" />} />
+                <Route path="/paciente/mis-registros" element={isLoggedIn && userData?.rol === 'paciente' ? <MisRegistros/> : <Navigate to="/login" />} />
                 <Route path="/paciente/mis-registros/:id" element={isLoggedIn && userData?.rol === 'paciente' ? <DetalleCita /> : <Navigate to="/login" />} />
                 <Route path="/medico/mis-registros" element={isLoggedIn && userData?.rol === 'medico' ? <MisRegistros /> : <Navigate to="/login" />} />
                 <Route path="/medico/mis-registros/:id" element={isLoggedIn && userData?.rol === 'medico' ? <DetalleCita /> : <Navigate to="/login" />} />
+
+                <Route path="/cita" element={<Proximamente titulo="Cita Médica" />} />
+                <Route path="/recomendacion" element={<Proximamente titulo="Recomendaciones" />} />
+                <Route path="/sugerencias" element={<Proximamente titulo="Sugerencias" />} />
+                <Route path="/administracion" element={<Proximamente titulo="Panel Administrativo" />} />
+                <Route path="/equipo" element={<Proximamente titulo="Equipo" />} />
+                <Route path="*" element={<Proximamente titulo="Página no encontrada" />} />
             </Routes>
             
             {citaEnEdicion && (
@@ -99,7 +107,7 @@ export function AppContent() {
                                     if (esDiaValido(e.target.value, citaEnEdicion)) {
                                         setCitaEditando({...citaEnEdicion, fecha: e.target.value, hora: ''});
                                     } else {
-                                        toast.error("Día no disponible", { description: "El médico no atiende este día." });
+                                        toast.error("Día no disponible", { description: "El médico no atiende este día."});
                                     }
                                 }} 
                             />
