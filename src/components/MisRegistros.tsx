@@ -5,16 +5,18 @@ import { useAuth } from '../context/AuthContext';
 import '../styles/TablaCitas.css';
 import { type CitaCompleta } from '../lib/tipos';
 
+const SIN_CITAS: CitaCompleta[] = [];
+const NOMBRES_DIAS = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+
 export const MisRegistros = () => {
     const context = useContext(CitasContext);
     const { userData, userRole } = useAuth(); 
 
-    if (!context) return null;
-    
-    const { citas, actualizarCita, setCitaEditando } = context;
-
+    // REGLA DE REACT: todos los hooks van ANTES de cualquier return
     const [filtroEspecialidad, setFiltroEspecialidad] = useState("Todos");
     const [filtroDia, setFiltroDia] = useState("Todos");
+
+    const citas = context?.citas ?? SIN_CITAS;
 
     // 1. Filtrado de acceso por usuario
     const citasUsuario = useMemo(() => {
@@ -26,15 +28,10 @@ export const MisRegistros = () => {
         });
     }, [citas, userData, userRole]);
 
-    // 2. Cálculo dinámico de días donde el médico tiene citas
+    // 2. Días en los que el médico tiene citas
     const diasDisponibles = useMemo(() => {
         if (userRole !== 'medico') return [];
-        const nombresDias = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
-        
-        // Mapeamos las citas del usuario para obtener los nombres de los días presentes
-        const listaDias = citasUsuario.map(c => nombresDias[new Date(c.fecha).getUTCDay()]);
-        
-        // Retornamos "Todos" + días únicos encontrados
+        const listaDias = citasUsuario.map(c => NOMBRES_DIAS[new Date(c.fecha).getUTCDay()]);
         return ["Todos", ...Array.from(new Set(listaDias))];
     }, [citasUsuario, userRole]);
 
@@ -45,9 +42,7 @@ export const MisRegistros = () => {
                 return filtroEspecialidad === "Todos" || c.medicos?.especialidad === filtroEspecialidad;
             }
             if (userRole === 'medico' && filtroDia !== "Todos") {
-                const fechaObj = new Date(c.fecha);
-                const dias = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
-                return dias[fechaObj.getUTCDay()] === filtroDia;
+                return NOMBRES_DIAS[new Date(c.fecha).getUTCDay()] === filtroDia;
             }
             return true;
         });
@@ -62,6 +57,10 @@ export const MisRegistros = () => {
         const lista = citasUsuario.map((c) => c.medicos?.especialidad).filter(Boolean);
         return ["Todos", ...Array.from(new Set(lista))];
     }, [citasUsuario]);
+
+    // Ahora sí, el return condicional (después de todos los hooks)
+    if (!context) return null;
+    const { actualizarCita, setCitaEditando } = context;
 
     const handleCambiarEstado = (id: string, nuevoEstado: 'Programada' | 'Cancelada' | 'Completada') => {
         const cita = citas.find(c => c.id_cita === id);

@@ -58,9 +58,10 @@ export function RegistroPaciente() {
             alert('Cuenta creada exitosamente');
             navigate('/login');
 
-        } catch (err: any) {
+        } catch (err) {
             console.error("Error capturado:", err);
-            setError(`Error: ${err.message || 'Verifica que no exista el correo/cédula'}`);
+            const mensaje = err instanceof Error ? err.message : 'Verifica que no exista el correo/cédula';
+            setError(`Error: ${mensaje}`);
         }
     };
 

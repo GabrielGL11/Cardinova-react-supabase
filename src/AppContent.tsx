@@ -30,7 +30,7 @@ export function AppContent() {
         const fechaObj = new Date(fechaSeleccionada.replace(/-/g, '/'));
         const diaNombre = fechaObj.toLocaleDateString('es-ES', { weekday: 'long' });
         
-        return horarios.some((h: any) => normalizar(h.dia) === normalizar(diaNombre));
+        return horarios.some(h => normalizar(h.dia) === normalizar(diaNombre));
     };
 
     const getHorariosDisponibles = (cita: CitaCompleta) => {
@@ -39,8 +39,8 @@ export function AppContent() {
         const diaNombre = fechaObj.toLocaleDateString('es-ES', { weekday: 'long' });
 
         return horarios
-            .filter((h: any) => normalizar(h.dia) === normalizar(diaNombre))
-            .map((h: any) => h.hora)
+            .filter(h => normalizar(h.dia) === normalizar(diaNombre))
+            .map(h => h.hora)
             .filter((hora: string) => 
                 !citas.some(c => 
                     c.id_medico === cita.id_medico && 

@@ -15,7 +15,7 @@ interface PropsPasoDetalles {
     setMotivoOtros: (s: string) => void;
     tipoAtencion: 'Presencial' | 'Virtual';
     setTipoAtencion: (t: 'Presencial' | 'Virtual') => void;
-    horariosDisponibles: any[]; 
+    horariosDisponibles: { dia: string }[]; 
     horasFiltradas: string[];   
     esDiaValido: (f: string) => boolean;
     onAtras: () => void;

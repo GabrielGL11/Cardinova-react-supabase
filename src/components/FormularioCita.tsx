@@ -17,6 +17,12 @@ interface PropsFormulario {
     buscarPacienteExterno: (cedula: string) => Promise<PacienteConUsuario | null>;
 }
 
+interface HorarioMedico {
+    id_medico: string;
+    dia: string;
+    hora: string;
+}
+
 export const FormularioCita = ({ onGuardar, buscarPacienteExterno }: PropsFormulario) => {
     const navigate = useNavigate();
     const { userRole } = useAuth();
@@ -24,7 +30,7 @@ export const FormularioCita = ({ onGuardar, buscarPacienteExterno }: PropsFormul
     const [paso, setPaso] = useState(1);
     const [medicos, setMedicos] = useState<MedicoConUsuario[]>([]);
     const [medico, setMedico] = useState<MedicoConUsuario | null>(null);
-    const [horarios, setHorarios] = useState<any[]>([]);
+    const [horarios, setHorarios] = useState<HorarioMedico[]>([]);
     
     const [esp, setEsp] = useState('');
     const [ciu, setCiu] = useState('');
@@ -108,7 +114,7 @@ export const FormularioCita = ({ onGuardar, buscarPacienteExterno }: PropsFormul
         }
 
         // 2. Gestionar el Paciente (Buscar o crear)
-        let { data: pacExistente } = await supabase
+        const { data: pacExistente } = await supabase
             .from('pacientes')
             .select('id_paciente')
             .eq('id_usuario', userId)
@@ -145,9 +151,10 @@ export const FormularioCita = ({ onGuardar, buscarPacienteExterno }: PropsFormul
         toast.success("Cita registrada correctamente");
         navigate(userRole === 'medico' ? '/medico/mis-registros' : '/paciente/mis-registros');
         
-    } catch (error: any) {
+    } catch (error) {
         console.error("Error en el proceso:", error);
-        toast.error("Error: " + (error.message || "No se pudo completar el registro"));
+        const mensaje = (error as { message?: string })?.message;
+        toast.error("Error: " + (mensaje || "No se pudo completar el registro"));
     }
 };
     return (

@@ -1,8 +1,7 @@
-import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 
 /**
  * Define la estructura de los datos del usuario para mantener la consistencia.
- * Se añadió el campo 'id' para poder filtrar las citas por usuario.
  */
 export interface UserData {
     id: string; // ID único generado por Supabase
@@ -13,9 +12,6 @@ export interface UserData {
     idMedico?: string;
 }
 
-/**
- * AuthContextType: Define qué funciones y estados están disponibles globalmente.
- */
 export interface AuthContextType {
     isLoggedIn: boolean;
     userRole: 'paciente' | 'medico' | null;
@@ -32,39 +28,34 @@ const AuthContext = createContext<AuthContextType>({
     logout: () => {},
 });
 
+// Recupera el usuario guardado (si el usuario refresca la página)
+const leerUsuarioGuardado = (): UserData | null => {
+    try {
+        const guardado = localStorage.getItem('usuarioLogueado');
+        return guardado ? JSON.parse(guardado) : null;
+    } catch {
+        return null;
+    }
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    // Inicialización del estado: intenta recuperar el usuario y el token de localStorage
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!localStorage.getItem('supabase_token'));
-    const [userRole, setUserRole] = useState<'paciente' | 'medico' | null>(null);
-    const [userData, setUserData] = useState<UserData | null>(null);
+    const [userData, setUserData] = useState<UserData | null>(leerUsuarioGuardado);
 
-    // Efecto para restaurar el estado si el usuario refresca la página
-    useEffect(() => {
-        const storedUser = localStorage.getItem('usuarioLogueado');
-        if (storedUser) {
-            const parsedUser = JSON.parse(storedUser);
-            setUserData(parsedUser);
-            setUserRole(parsedUser.rol);
-        }
-    }, []);
+    // El rol se deriva de userData, no necesita estado propio
+    const userRole = userData?.rol ?? null;
 
-    // login: Actualiza el estado global y persiste tanto el usuario como el token de Supabase
-    const login = useCallback((userData: UserData, token: string) => {
-        localStorage.setItem('supabase_token', token); // Guardamos el token para peticiones futuras
-        localStorage.setItem('usuarioLogueado', JSON.stringify(userData));
-        
+    const login = useCallback((datos: UserData, token: string) => {
+        localStorage.setItem('supabase_token', token);
+        localStorage.setItem('usuarioLogueado', JSON.stringify(datos));
         setIsLoggedIn(true);
-        setUserRole(userData.rol);
-        setUserData(userData);
+        setUserData(datos);
     }, []);
 
-    // logout: Limpia los estados, el almacenamiento local y destruye la referencia de sesión
     const logout = useCallback(() => {
         localStorage.removeItem('supabase_token');
         localStorage.removeItem('usuarioLogueado');
-        
         setIsLoggedIn(false);
-        setUserRole(null);
         setUserData(null);
     }, []);
 
@@ -76,6 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 };
 
 // Hook personalizado para consumir el contexto de forma segura y tipada.
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) {
