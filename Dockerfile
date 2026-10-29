@@ -1,6 +1,12 @@
 # Etapa 1: compilar la app con Node
 FROM node:22-alpine AS build
 WORKDIR /app
+
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_KEY
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_KEY=$VITE_SUPABASE_KEY
+
 COPY package*.json ./
 RUN npm ci
 COPY . .
