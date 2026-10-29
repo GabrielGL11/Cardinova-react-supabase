@@ -74,3 +74,26 @@ http://localhost:5173
 ```
 
 > **Nota:** El puerto puede variar dependiendo de si el puerto predeterminado ya está siendo utilizado.
+
+## 🐳 Docker
+
+La app se empaqueta en una imagen con nginx (puerto 8080). Las variables de Supabase
+se incrustan al compilar, por eso se pasan como `--build-arg`.
+
+```bash
+docker build \
+  --build-arg VITE_SUPABASE_URL=https://TU-PROYECTO.supabase.co \
+  --build-arg VITE_SUPABASE_KEY=tu_clave_publishable \
+  -t cardinova .
+
+docker run --rm -p 8080:8080 --name cardinova-test cardinova
+```
+
+Abrir: http://localhost:8080
+
+> No subas el archivo `.env` al repositorio. Ya está en `.gitignore` y `.dockerignore`.
+
+## ☁️ Despliegue
+
+Rama `devops-cloud-run`: despliegue en Google Cloud Run mediante GitHub Actions
+(ver `.github/workflows/deploy.yml`).
