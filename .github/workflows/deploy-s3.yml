@@ -1,0 +1,53 @@
+name: Deploy a S3 + CloudFront
+
+on:
+  push:
+    branches: [ "devops-nube-practica" ]
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: us-east-2
+  S3_BUCKET: cardinova-web-006209503558
+  CLOUDFRONT_DISTRIBUTION_ID: E21DEXKSJWY4KJ
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Comprobar secretos de Supabase
+        run: |
+          [ -n "$URL" ] || { echo "FALTA VITE_SUPABASE_URL"; exit 1; }
+          [ -n "$KEY" ] || { echo "FALTA VITE_SUPABASE_KEY"; exit 1; }
+          echo "Secretos de Supabase presentes"
+        env:
+          URL: ${{ secrets.VITE_SUPABASE_URL }}
+          KEY: ${{ secrets.VITE_SUPABASE_KEY }}
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Subir a S3
+        run: aws s3 sync dist s3://${{ env.S3_BUCKET }} --delete
+
+      - name: Invalidar caché de CloudFront
+        run: aws cloudfront create-invalidation --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
