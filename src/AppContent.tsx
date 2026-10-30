@@ -1,36 +1,37 @@
 import { useContext } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster, toast } from 'sonner'; 
-import { CitasContext } from './context/CitasContext'; 
+import { Toaster, toast } from 'sonner';
+import { CitasContext } from './context/CitasContext';
 import { useAuth } from './context/AuthContext';
 import { FormularioCita } from './components/FormularioCita';
-import { MisRegistros } from './components/MisRegistros'; 
+import { MisRegistros } from './components/MisRegistros';
 import DetalleCita from './components/DetalleCita';
 import Proximamente from './components/Proximamente';
 import { type CitaCompleta } from './lib/tipos';
 import { Home } from './layout/Home';
 import { Login } from './layout/Login';
 import { RegistroPaciente } from './layout/RegistroPaciente';
+import { Equipo } from './layout/Equipo';
 
 export function AppContent() {
     const context = useContext(CitasContext);
     const { isLoggedIn, userData } = useAuth();
-    
+
     if (!context) return null;
     const { citas, agregarCita, actualizarCita, citaEditando, setCitaEditando } = context;
 
     const citaEnEdicion = citaEditando as CitaCompleta | null;
 
-    const normalizar = (texto: string) => 
-        texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    const normalizar = (texto: string) =>
+        texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
     const esDiaValido = (fechaSeleccionada: string, cita: CitaCompleta) => {
         const horarios = cita.medicos?.horarios_medico || [];
         if (horarios.length === 0) return false;
-        
+
         const fechaObj = new Date(fechaSeleccionada.replace(/-/g, '/'));
         const diaNombre = fechaObj.toLocaleDateString('es-ES', { weekday: 'long' });
-        
+
         return horarios.some(h => normalizar(h.dia) === normalizar(diaNombre));
     };
 
@@ -42,12 +43,12 @@ export function AppContent() {
         return horarios
             .filter(h => normalizar(h.dia) === normalizar(diaNombre))
             .map(h => h.hora)
-            .filter((hora: string) => 
-                !citas.some(c => 
-                    c.id_medico === cita.id_medico && 
-                    c.fecha === cita.fecha && 
-                    c.hora === hora && 
-                    c.id_cita !== cita.id_cita && 
+            .filter((hora: string) =>
+                !citas.some(c =>
+                    c.id_medico === cita.id_medico &&
+                    c.fecha === cita.fecha &&
+                    c.hora === hora &&
+                    c.id_cita !== cita.id_cita &&
                     (c.estado === 'Programada' || c.estado === 'Completada')
                 )
             );
@@ -67,7 +68,7 @@ export function AppContent() {
     return (
         <>
             <Toaster richColors position="top-right" />
-            
+
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
@@ -82,42 +83,42 @@ export function AppContent() {
                 <Route path="/recomendacion" element={<Proximamente titulo="Recomendaciones" />} />
                 <Route path="/sugerencias" element={<Proximamente titulo="Sugerencias" />} />
                 <Route path="/administracion" element={<Proximamente titulo="Panel Administrativo" />} />
-                <Route path="/equipo" element={<Proximamente titulo="Equipo" />} />
+                <Route path="/equipo" element={<Equipo />} />
                 <Route path="*" element={<Proximamente titulo="Página no encontrada" />} />
             </Routes>
-            
+
             {citaEnEdicion && (
                 <div className="modal-overlay">
                     <div className="modal-contenido">
                         <h3>Editar Cita</h3>
-                        
+
                         <div className="aviso-dias">
                             <strong>Atiende:</strong> {citaEnEdicion.medicos?.horarios_medico && citaEnEdicion.medicos.horarios_medico.length > 0
-                                ? Array.from(new Set(citaEnEdicion.medicos.horarios_medico.map(h => h.dia))).join(', ') 
+                                ? Array.from(new Set(citaEnEdicion.medicos.horarios_medico.map(h => h.dia))).join(', ')
                                 : 'Cargando disponibilidad...'}
                         </div>
 
                         <div className="grupo-selector">
                             <label htmlFor="fechaCita">Fecha:</label>
-                            <input 
-                                id="fechaCita" 
-                                type="date" 
-                                value={citaEnEdicion.fecha ? citaEnEdicion.fecha.split('T')[0] : ''} 
+                            <input
+                                id="fechaCita"
+                                type="date"
+                                value={citaEnEdicion.fecha ? citaEnEdicion.fecha.split('T')[0] : ''}
                                 onChange={(e) => {
                                     if (esDiaValido(e.target.value, citaEnEdicion)) {
                                         setCitaEditando({...citaEnEdicion, fecha: e.target.value, hora: ''});
                                     } else {
                                         toast.error("Día no disponible", { description: "El médico no atiende este día."});
                                     }
-                                }} 
+                                }}
                             />
                         </div>
 
                         <div className="grupo-selector">
                             <label htmlFor="horaCita">Hora:</label>
-                            <select 
-                                id="horaCita" 
-                                value={citaEnEdicion.hora} 
+                            <select
+                                id="horaCita"
+                                value={citaEnEdicion.hora}
                                 onChange={(e) => setCitaEditando({...citaEnEdicion, hora: e.target.value})}
                                 disabled={!citaEnEdicion.fecha || !esDiaValido(citaEnEdicion.fecha, citaEnEdicion)}
                             >
@@ -129,9 +130,9 @@ export function AppContent() {
                         </div>
 
                         <div className="acciones-modal">
-                            <button 
-                                type="button" 
-                                className="boton-registro" 
+                            <button
+                                type="button"
+                                className="boton-registro"
                                 onClick={async () => {
                                     await guardarEdicion();
                                     setCitaEditando(null);
@@ -139,9 +140,9 @@ export function AppContent() {
                             >
                                 Guardar Cambios
                             </button>
-                            <button 
-                                type="button" 
-                                className="boton-volver" 
+                            <button
+                                type="button"
+                                className="boton-volver"
                                 onClick={() => setCitaEditando(null)}
                             >
                                 Cancelar
