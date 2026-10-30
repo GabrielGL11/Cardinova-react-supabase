@@ -79,12 +79,12 @@ export function RegistroPaciente() {
 
                     <div className="grid-container">
                         <div>
-                            <label htmlFor="nombres">Nombres:</label>
+                            <label htmlFor="nombres">Nombre:</label>
                             <input type="text" id="nombres" required 
                                 value={formData.nombres} onChange={(e) => setFormData({...formData, nombres: e.target.value})} />
                         </div>
                         <div>
-                            <label htmlFor="apellidos">Apellidos:</label>
+                            <label htmlFor="apellidos">Apellido:</label>
                             <input type="text" id="apellidos" required 
                                 value={formData.apellidos} onChange={(e) => setFormData({...formData, apellidos: e.target.value})} />
                         </div>
