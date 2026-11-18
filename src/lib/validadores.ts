@@ -1,11 +1,11 @@
-interface MedicoConDias {
+﻿interface MedicoConDias {
     diasDisponibles: string[];
 }
 
 export const obtenerDiaSemana = (fecha: string): string => {
     const dias = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
     const [y, m, d] = fecha.split('-').map(Number);
-    // Date.UTC + getUTCDay evita desfases de día por zona horaria
+    // Date.UTC + getUTCDay evita desfases de dÃ­a por zona horaria
     return dias[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
 };
 
@@ -15,5 +15,5 @@ export const esFechaValida = (fecha: string, medico: MedicoConDias): boolean => 
 };
 
 export const validarCedula = (cedula: string): boolean => {
-    return /^\d{10}$/.test(cedula); // Solo permite 10 dígitos numéricos
+    return /^\d{9}$/.test(cedula); // Solo permite 10 dÃ­gitos numÃ©ricos
 };
