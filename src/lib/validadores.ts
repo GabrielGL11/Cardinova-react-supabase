@@ -15,5 +15,6 @@ export const esFechaValida = (fecha: string, medico: MedicoConDias): boolean => 
 };
 
 export const validarCedula = (cedula: string): boolean => {
-    return /^\d{9}$/.test(cedula); // Solo permite 10 dÃ­gitos numÃ©ricos
+    return /^\d{10}$/.test(cedula); // Solo permite 10 dÃ­gitos numÃ©ricos
 };
+
