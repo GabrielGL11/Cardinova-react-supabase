@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { validarCedula } from '../lib/validadores';
 import '../styles/Layout.css';
 
 export function RegistroPaciente() {
@@ -22,6 +23,11 @@ export function RegistroPaciente() {
     const handleRegistro = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+
+        if (!validarCedula(formData.cedula.trim())) {
+            setError('La cédula debe tener exactamente 10 dígitos numéricos');
+            return;
+        }
 
         if (formData.password !== formData.confirmar) {
             setError('Las contraseñas no coinciden');
@@ -91,8 +97,8 @@ export function RegistroPaciente() {
                     </div>
 
                     <label htmlFor="cedula">Cédula de identidad:</label>
-                    <input type="text" id="cedula" maxLength={10} required 
-                        value={formData.cedula} onChange={(e) => setFormData({...formData, cedula: e.target.value})} />
+                    <input type="text" id="cedula" inputMode="numeric" maxLength={10} pattern="\d{10}" required 
+                        value={formData.cedula} onChange={(e) => setFormData({...formData, cedula: e.target.value.replace(/\D/g, '')})} />
 
                     <label htmlFor="correo">Correo electrónico:</label>
                     <input type="email" id="correo" required 

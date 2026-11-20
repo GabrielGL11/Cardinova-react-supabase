@@ -1,6 +1,7 @@
 import { createContext, useState, type ReactNode, useEffect, useCallback } from 'react';
 import { type Cita, type CitaCompleta } from '../lib/tipos'; 
 import { useAuth } from './AuthContext';
+import { esCitaDuplicada } from '../lib/validadores';
 
 interface CitasContextType {
     citas: CitaCompleta[];
@@ -66,6 +67,9 @@ export const CitasProvider = ({ children }: { children: ReactNode }) => {
     }, [obtenerCitas, userData]);
 
     const agregarCita = async (nuevaCita: Cita) => {
+        if (esCitaDuplicada(nuevaCita, citas)) {
+            throw new Error('Ya existe una cita con este médico en esa fecha y hora');
+        }
         const response = await fetch(`${URL_BASE}/rest/v1/citas`, {
             method: 'POST',
             headers: {
@@ -76,7 +80,8 @@ export const CitasProvider = ({ children }: { children: ReactNode }) => {
             },
             body: JSON.stringify(nuevaCita)
         });
-        if (response.ok) await recargarCitas();
+        if (!response.ok) throw new Error(await response.text());
+        await recargarCitas();
     };
 
     const actualizarCita = async (citaActualizada: CitaCompleta) => {

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth, type UserData } from '../context/AuthContext';
+import { validarCedula, esFechaValida, obtenerDiaSemana, normalizarDia } from '../lib/validadores';
 import { type MedicoConUsuario, type Cita, type PacienteConUsuario } from '../lib/tipos';
 import '../styles/FormularioCita.css';
 
@@ -27,6 +28,8 @@ export const FormularioCita = ({ onGuardar, buscarPacienteExterno }: PropsFormul
     const navigate = useNavigate();
     const { userRole } = useAuth();
     
+    const guardandoRef = useRef(false);
+    const [guardando, setGuardando] = useState(false);
     const [paso, setPaso] = useState(1);
     const [medicos, setMedicos] = useState<MedicoConUsuario[]>([]);
     const [medico, setMedico] = useState<MedicoConUsuario | null>(null);
@@ -62,27 +65,47 @@ export const FormularioCita = ({ onGuardar, buscarPacienteExterno }: PropsFormul
         }
     }, [medico]);
 
-    const normalizarTexto = (texto: string) => texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    
-    const obtenerNombreDia = (fechaStr: string) => {
-        const [year, month, day] = fechaStr.split('-').map(Number);
-        return new Date(year, month - 1, day).toLocaleDateString('es-ES', { weekday: 'long' });
-    };
+    const diasMedico = horarios.map(h => normalizarDia(h.dia));
 
-    const esDiaValido = (fechaSeleccionada: string) => {
-        if (!fechaSeleccionada) return false;
-        const diaNombre = normalizarTexto(obtenerNombreDia(fechaSeleccionada));
-        return horarios.some(h => normalizarTexto(h.dia) === diaNombre);
-    };
+    const esDiaValido = (fechaSeleccionada: string) =>
+        esFechaValida(fechaSeleccionada, { diasDisponibles: diasMedico });
 
     const obtenerHorasParaDia = (fechaSeleccionada: string) => {
         if (!fechaSeleccionada) return [];
-        const diaNombre = normalizarTexto(obtenerNombreDia(fechaSeleccionada));
-        return horarios.filter(h => normalizarTexto(h.dia) === diaNombre).map(h => h.hora.substring(0, 5));
+        const dia = obtenerDiaSemana(fechaSeleccionada);
+        return horarios.filter(h => normalizarDia(h.dia) === dia).map(h => h.hora.substring(0, 5));
     };
 
     const handleGuardar = async () => {
+    // Evita doble envío (doble clic) que duplicaba las citas
+    if (guardandoRef.current) return;
+    guardandoRef.current = true;
+    setGuardando(true);
     try {
+        if (!validarCedula(paciente.usuarios?.cedula ?? '')) {
+            toast.error("La cédula debe tener exactamente 10 dígitos numéricos");
+            return;
+        }
+        if (!esDiaValido(fecha)) {
+            toast.error("Fecha no disponible", { description: "El médico no atiende ese día." });
+            return;
+        }
+
+        // 0. Verificar que el horario no esté ya ocupado (no duplicar citas)
+        const { data: citasExistentes, error: errorDup } = await supabase
+            .from('citas')
+            .select('id_cita')
+            .eq('id_medico', medico!.id_medico)
+            .eq('fecha', fecha)
+            .eq('hora', hora)
+            .neq('estado', 'Cancelada')
+            .limit(1);
+        if (errorDup) throw errorDup;
+        if (citasExistentes && citasExistentes.length > 0) {
+            toast.error("Horario no disponible", { description: "Ya existe una cita con este médico en esa fecha y hora." });
+            return;
+        }
+
         // 1. Gestionar el Usuario: buscar por cédula y crearlo SOLO si no existe
         //    (antes se usaba upsert y sobrescribía la contraseña/rol de cuentas existentes)
         const { data: usuarioExistente, error: errorBusqueda } = await supabase
@@ -155,6 +178,9 @@ export const FormularioCita = ({ onGuardar, buscarPacienteExterno }: PropsFormul
         console.error("Error en el proceso:", error);
         const mensaje = (error as { message?: string })?.message;
         toast.error("Error: " + (mensaje || "No se pudo completar el registro"));
+    } finally {
+        guardandoRef.current = false;
+        setGuardando(false);
     }
 };
     return (
@@ -176,7 +202,7 @@ export const FormularioCita = ({ onGuardar, buscarPacienteExterno }: PropsFormul
             {paso === 3 && (
                 <PasoDatosPaciente 
                     paciente={paciente} setPaciente={setPaciente} onBuscarPaciente={buscarPacienteExterno} 
-                    onAtras={() => setPaso(2)} onGuardar={handleGuardar} 
+                    onAtras={() => setPaso(2)} onGuardar={handleGuardar} guardando={guardando} 
                 />
             )}
         </div>
